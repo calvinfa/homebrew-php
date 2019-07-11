@@ -40,6 +40,7 @@ class ValetPhpAT71 < Formula
   depends_on "tidy-html5"
   depends_on "unixodbc"
   depends_on "webp"
+  depends_on "imap-uw"
 
   # PHP build system incorrectly links system libraries
   # see https://github.com/php/php-src/pull/3472
@@ -164,6 +165,8 @@ class ValetPhpAT71 < Formula
       --with-xmlrpc
       --with-xsl#{headers_path}
       --with-zlib#{headers_path}
+      --with-imap=#{Formula["imap-uw"].opt_prefix}
+      --with-imap-ssl=#{Formula["openssl"].opt_prefix}
     ]
 
     system "./configure", *args
