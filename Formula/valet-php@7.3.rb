@@ -33,7 +33,7 @@ class ValetPhpAT73 < Formula
   depends_on "libsodium"
   depends_on "libzip"
   depends_on "openldap"
-  depends_on "openssl"
+  depends_on "openssl@1.1"
   depends_on "pcre2"
   depends_on "sqlite"
   depends_on "tidy-html5"
