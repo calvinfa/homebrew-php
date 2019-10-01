@@ -34,7 +34,7 @@ class ValetPhpAT71 < Formula
   depends_on "libzip"
   depends_on "mcrypt"
   depends_on "openldap"
-  depends_on "openssl"
+  depends_on "openssl@1.1"
   depends_on "pcre"
   depends_on "sqlite"
   depends_on "tidy-html5"
