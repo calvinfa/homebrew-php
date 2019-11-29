@@ -91,6 +91,14 @@ class ValetPhpAT74 < Formula
     # Prevent homebrew from harcoding path to sed shim in phpize script
     ENV["lt_cv_path_SED"] = "sed"
 
+    # system pkg-config missing
+    ENV["KERBEROS_CFLAGS"] = " "
+    ENV["KERBEROS_LIBS"] = "-lkrb5"
+    ENV["SASL_CFLAGS"] = "-I#{MacOS.sdk_path_if_needed}/usr/include/sasl"
+    ENV["SASL_LIBS"] = "-lsasl2"
+    ENV["EDIT_CFLAGS"] = " "
+    ENV["EDIT_LIBS"] = "-ledit"
+    
     # Each extension that is built on Mojave needs a direct reference to the
     # sdk path or it won't find the headers
     headers_path = "=#{MacOS.sdk_path_if_needed}/usr"
@@ -102,6 +110,7 @@ class ValetPhpAT74 < Formula
       --with-config-file-path=#{config_path}
       --with-config-file-scan-dir=#{config_path}/conf.d
       --with-pear=#{pkgshare}/pear
+      --with-os-sdkpath=#{MacOS.sdk_path_if_needed}
       --enable-bcmath
       --enable-calendar
       --enable-dba
@@ -109,11 +118,11 @@ class ValetPhpAT74 < Formula
       --enable-exif
       --enable-ftp
       --enable-fpm
+      --enable-gd
       --enable-intl
       --enable-mbregex
       --enable-mbstring
       --enable-mysqlnd
-      --enable-opcache-file
       --enable-pcntl
       --enable-phpdbg
       --enable-phpdbg-webhelper
@@ -123,51 +132,46 @@ class ValetPhpAT74 < Formula
       --enable-sysvmsg
       --enable-sysvsem
       --enable-sysvshm
-      --enable-wddx
-      --enable-zip
-      --enable-imap
       --with-apxs2=#{Formula["httpd"].opt_bin}/apxs
       --with-bz2#{headers_path}
-      --with-curl=#{Formula["curl-openssl"].opt_prefix}
+      --with-curl
+      --with-ffi
       --with-fpm-user=_www
       --with-fpm-group=_www
-      --with-freetype-dir=#{Formula["freetype"].opt_prefix}
-      --with-gd
+      --with-freetype
       --with-gettext=#{Formula["gettext"].opt_prefix}
       --with-gmp=#{Formula["gmp"].opt_prefix}
       --with-iconv#{headers_path}
-      --with-icu-dir=#{Formula["icu4c"].opt_prefix}
-      --with-jpeg-dir=#{Formula["jpeg"].opt_prefix}
-      --with-kerberos#{headers_path}
+      --with-jpeg
+      --with-kerberos
       --with-layout=GNU
       --with-ldap=#{Formula["openldap"].opt_prefix}
-      --with-ldap-sasl#{headers_path}
-      --with-libxml-dir#{headers_path}
-      --with-libedit#{headers_path}
-      --with-libzip
+      --with-ldap-sasl
+      --with-libxml
+      --with-libedit
       --with-mhash#{headers_path}
       --with-mysql-sock=/tmp/mysql.sock
       --with-mysqli=mysqlnd
       --with-ndbm#{headers_path}
-      --with-openssl=#{Formula["openssl@1.1"].opt_prefix}
+      --with-openssl
       --with-password-argon2=#{Formula["argon2"].opt_prefix}
       --with-pdo-dblib=#{Formula["freetds"].opt_prefix}
       --with-pdo-mysql=mysqlnd
-      --with-pdo-odbc=unixODBC,#{Formula["unixodbc"].opt_prefix}
+      --with-pdo-odbc=unixODBC
       --with-pdo-pgsql=#{Formula["libpq"].opt_prefix}
-      --with-pdo-sqlite=#{Formula["sqlite"].opt_prefix}
+      --with-pdo-sqlite
       --with-pgsql=#{Formula["libpq"].opt_prefix}
       --with-pic
-      --with-png-dir=#{Formula["libpng"].opt_prefix}
       --with-pspell=#{Formula["aspell"].opt_prefix}
-      --with-sodium=#{Formula["libsodium"].opt_prefix}
-      --with-sqlite3=#{Formula["sqlite"].opt_prefix}
+      --with-sodium
+      --with-sqlite3
       --with-tidy=#{Formula["tidy-html5"].opt_prefix}
-      --with-unixODBC=#{Formula["unixodbc"].opt_prefix}
-      --with-webp-dir=#{Formula["webp"].opt_prefix}
+      --with-unixODBC
+      --with-webp
       --with-xmlrpc
-      --with-xsl#{headers_path}
-      --with-zlib#{headers_path}
+      --with-xsl
+      --with-zip
+      --with-zlib
       --with-imap=#{Formula["imap-uw"].opt_prefix}
       --with-imap-ssl=#{Formula["openssl@1.1"].opt_prefix}
     ]
