@@ -419,65 +419,44 @@ class ValetPhpAT74 < Formula
 end
 
 __END__
-diff --git a/acinclude.m4 b/acinclude.m4
-index 168c465f8d..6c087d152f 100644
---- a/acinclude.m4
-+++ b/acinclude.m4
-@@ -441,7 +441,11 @@ dnl
- dnl Adds a path to linkpath/runpath (LDFLAGS)
+diff --git a/build/php.m4 b/build/php.m4
+index 3624a33a8e..d17a635c2c 100644
+--- a/build/php.m4
++++ b/build/php.m4
+@@ -423,7 +423,7 @@ dnl
+ dnl Adds a path to linkpath/runpath (LDFLAGS).
  dnl
  AC_DEFUN([PHP_ADD_LIBPATH],[
 -  if test "$1" != "/usr/$PHP_LIBDIR" && test "$1" != "/usr/lib"; then
-+  case "$1" in
-+  "/usr/$PHP_LIBDIR"|"/usr/lib"[)] ;;
-+  /Library/Developer/CommandLineTools/SDKs/*/usr/lib[)] ;;
-+  /Applications/Xcode*.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/*/usr/lib[)] ;;
-+  *[)]
++  if test "$1" != "$PHP_OS_SDKPATH/usr/$PHP_LIBDIR" && test "$1" != "/usr/lib"; then
      PHP_EXPAND_PATH($1, ai_p)
      ifelse([$2],,[
        _PHP_ADD_LIBPATH_GLOBAL([$ai_p])
-@@ -452,8 +456,8 @@ AC_DEFUN([PHP_ADD_LIBPATH],[
-       else
-         _PHP_ADD_LIBPATH_GLOBAL([$ai_p])
-       fi
--    ])
--  fi
-+    ]) ;;
-+  esac
- ])
-
- dnl
-@@ -487,7 +491,11 @@ dnl add an include path.
- dnl if before is 1, add in the beginning of INCLUDES.
+@@ -468,7 +468,7 @@ dnl
+ dnl Add an include path. If before is 1, add in the beginning of INCLUDES.
  dnl
  AC_DEFUN([PHP_ADD_INCLUDE],[
 -  if test "$1" != "/usr/include"; then
-+  case "$1" in
-+  "/usr/include"[)] ;;
-+  /Library/Developer/CommandLineTools/SDKs/*/usr/include[)] ;;
-+  /Applications/Xcode*.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/*/usr/include[)] ;;
-+  *[)]
++  if test "$1" != "$PHP_OS_SDKPATH/usr/include"; then
      PHP_EXPAND_PATH($1, ai_p)
      PHP_RUN_ONCE(INCLUDEPATH, $ai_p, [
        if test "$2"; then
-@@ -495,8 +503,8 @@ AC_DEFUN([PHP_ADD_INCLUDE],[
-       else
-         INCLUDES="$INCLUDES -I$ai_p"
-       fi
--    ])
--  fi
-+    ]) ;;
-+  esac
- ])
-
- dnl internal, don't use
-@@ -2411,7 +2419,8 @@ AC_DEFUN([PHP_SETUP_ICONV], [
-     fi
-
-     if test -f $ICONV_DIR/$PHP_LIBDIR/lib$iconv_lib_name.a ||
--       test -f $ICONV_DIR/$PHP_LIBDIR/lib$iconv_lib_name.$SHLIB_SUFFIX_NAME
-+       test -f $ICONV_DIR/$PHP_LIBDIR/lib$iconv_lib_name.$SHLIB_SUFFIX_NAME ||
-+       test -f $ICONV_DIR/$PHP_LIBDIR/lib$iconv_lib_name.tbd
-     then
-       PHP_CHECK_LIBRARY($iconv_lib_name, libiconv, [
-         found_iconv=yes
+diff --git a/configure.ac b/configure.ac
+index 36c6e5e3e2..71b1a16607 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -190,6 +190,14 @@ PHP_ARG_WITH([libdir],
+   [lib],
+   [no])
+ 
++dnl Support systems with system libraries/includes in e.g. /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk.
++PHP_ARG_WITH([os-sdkpath],
++  [for system SDK directory],
++  [AS_HELP_STRING([--with-os-sdkpath=NAME],
++    [Ignore system libraries and includes in NAME rather than /])],
++  [],
++  [no])
++
+ PHP_ARG_ENABLE([rpath],
+   [whether to enable runpaths],
+   [AS_HELP_STRING([--disable-rpath],
