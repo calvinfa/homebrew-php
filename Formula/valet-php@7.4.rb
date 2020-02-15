@@ -1,15 +1,8 @@
 class ValetPhpAT74 < Formula
   desc "General-purpose scripting language"
-  homepage "https://secure.php.net/"
-  url "https://php.net/get/php-7.4.0.tar.xz/from/this/mirror"
-  sha256 "9bb751b20e5d6cc1ea9b1ebf23ef2d5f07f99b2d9cc417bf1d70c04f8b20ec42"
-
-  bottle do
-    root_url "https://dl.bintray.com/calvinfa/homebrew-php"
-    sha256 "3d2087154452705ef6e3075a8b4d8c79ffd106aacd58285c55d23236c80740b6" => :mojave
-    sha256 "6ecae1a9ebf316d6643a93bdc07e5fcc32303f324e5a974e4fc8f330639189ea" => :high_sierra
-    sha256 "0bdbf52e7e7f3d250adfc570298fd46deb0ca3ff6615d1b3c5dd055ad9ff4dad" => :sierra
-  end
+  homepage "https://www.php.net/"
+  url "https://www.php.net/distributions/php-7.4.2.tar.xz"
+  sha256 "98284deac017da0d426117ecae7599a1f1bf62ae3911e8bc16c4403a8f4bdf13"
 
   keg_only :versioned_formula
 
@@ -32,6 +25,7 @@ class ValetPhpAT74 < Formula
   depends_on "libpng"
   depends_on "libpq"
   depends_on "libsodium"
+  depends_on "libyaml"
   depends_on "libzip"
   depends_on "oniguruma"
   depends_on "openldap"
@@ -65,7 +59,7 @@ class ValetPhpAT74 < Formula
 
       # apxs will interpolate the @ in the versioned prefix: https://bz.apache.org/bugzilla/show_bug.cgi?id=61944
       s.gsub! "LIBEXECDIR='$APXS_LIBEXECDIR'",
-      "LIBEXECDIR='" + "#{lib}/httpd/modules".gsub("@", "\\@") + "'"
+              "LIBEXECDIR='" + "#{lib}/httpd/modules".gsub("@", "\\@") + "'"
     end
 
     # Update error message in apache sapi to better explain the requirements
@@ -81,10 +75,6 @@ class ValetPhpAT74 < Formula
 
     inreplace "sapi/fpm/php-fpm.conf.in", ";daemonize = yes", "daemonize = no"
 
-
-    # Required due to icu4c dependency
-    ENV.cxx11
-
     config_path = etc/"valet-php/#{php_version}"
     # Prevent system pear config from inhibiting pear install
     (config_path/"pear.conf").delete if (config_path/"pear.conf").exist?
@@ -99,7 +89,7 @@ class ValetPhpAT74 < Formula
     ENV["SASL_LIBS"] = "-lsasl2"
     ENV["EDIT_CFLAGS"] = " "
     ENV["EDIT_LIBS"] = "-ledit"
-    
+
     # Each extension that is built on Mojave needs a direct reference to the
     # sdk path or it won't find the headers
     headers_path = "=#{MacOS.sdk_path_if_needed}/usr"
@@ -186,12 +176,18 @@ class ValetPhpAT74 < Formula
     orig_ext_dir = File.basename(extension_dir)
     inreplace bin/"php-config", lib/"php", prefix/"pecl"
     inreplace "php.ini-development", %r{; ?extension_dir = "\./"},
-              "extension_dir = \"#{HOMEBREW_PREFIX}/lib/php/pecl/#{orig_ext_dir}\""
+      "extension_dir = \"#{HOMEBREW_PREFIX}/lib/php/pecl/#{orig_ext_dir}\""
+
+    # Use OpenSSL cert bundle
+    inreplace "php.ini-development", /; ?openssl\.cafile=/,
+      "openssl.cafile = \"#{etc}/openssl@1.1/cert.pem\""
+    inreplace "php.ini-development", /; ?openssl\.capath=/,
+      "openssl.capath = \"#{etc}/openssl@1.1/certs\""
 
     config_files = {
-        "php.ini-development"   => "php.ini",
-        "sapi/fpm/php-fpm.conf" => "php-fpm.conf",
-        "sapi/fpm/www.conf"     => "php-fpm.d/www.conf",
+      "php.ini-development"   => "php.ini",
+      "sapi/fpm/php-fpm.conf" => "php-fpm.conf",
+      "sapi/fpm/www.conf"     => "php-fpm.d/www.conf",
     }
     config_files.each_value do |dst|
       dst_default = config_path/"#{dst}.default"
@@ -215,7 +211,7 @@ class ValetPhpAT74 < Formula
     ]
 
     %W[
-    #{pear_prefix}/.channels
+      #{pear_prefix}/.channels
       #{pear_prefix}/.channels/.alias
     ].each do |f|
       chmod 0755, f
@@ -247,7 +243,7 @@ class ValetPhpAT74 < Formula
         "test_dir" => pear_path/"test",
         "php_bin"  => opt_bin/"php",
     }.each do |key, value|
-      value.mkpath if key =~ /(?<!bin|man)_dir$/
+      value.mkpath if /(?<!bin|man)_dir$/.match?(key)
       system bin/"pear", "config-set", key, value, "system"
     end
 
@@ -260,7 +256,7 @@ class ValetPhpAT74 < Formula
       extension_type = (e == "opcache") ? "zend_extension" : "extension"
       if ext_config_path.exist?
         inreplace ext_config_path,
-                  /#{extension_type}=.*$/, "#{extension_type}=#{php_ext_dir}/#{e}.so"
+          /#{extension_type}=.*$/, "#{extension_type}=#{php_ext_dir}/#{e}.so"
       else
         ext_config_path.write <<~EOS
           [#{e}]
@@ -320,17 +316,17 @@ class ValetPhpAT74 < Formula
 
   test do
     assert_match /^Zend OPcache$/, shell_output("#{bin}/php -i"),
-                 "Zend OPCache extension not loaded"
+      "Zend OPCache extension not loaded"
     # Test related to libxml2 and
     # https://github.com/Homebrew/homebrew-core/issues/28398
     assert_includes MachO::Tools.dylibs("#{bin}/php"),
-                    "#{Formula["libpq"].opt_lib}/libpq.5.dylib"
+      "#{Formula["libpq"].opt_lib}/libpq.5.dylib"
     system "#{sbin}/php-fpm", "-t"
     system "#{bin}/phpdbg", "-V"
     system "#{bin}/php-cgi", "-m"
     # Prevent SNMP extension to be added
     assert_no_match /^snmp$/, shell_output("#{bin}/php -m"),
-                    "SNMP extension doesn't work reliably with Homebrew on High Sierra"
+      "SNMP extension doesn't work reliably with Homebrew on High Sierra"
     begin
       require "socket"
 
@@ -428,7 +424,7 @@ diff --git a/build/php.m4 b/build/php.m4
 index 3624a33a8e..d17a635c2c 100644
 --- a/build/php.m4
 +++ b/build/php.m4
-@@ -423,7 +423,7 @@ dnl
+@@ -425,7 +425,7 @@ dnl
  dnl Adds a path to linkpath/runpath (LDFLAGS).
  dnl
  AC_DEFUN([PHP_ADD_LIBPATH],[
@@ -437,7 +433,7 @@ index 3624a33a8e..d17a635c2c 100644
      PHP_EXPAND_PATH($1, ai_p)
      ifelse([$2],,[
        _PHP_ADD_LIBPATH_GLOBAL([$ai_p])
-@@ -468,7 +468,7 @@ dnl
+@@ -470,7 +470,7 @@ dnl
  dnl Add an include path. If before is 1, add in the beginning of INCLUDES.
  dnl
  AC_DEFUN([PHP_ADD_INCLUDE],[
@@ -453,7 +449,7 @@ index 36c6e5e3e2..71b1a16607 100644
 @@ -190,6 +190,14 @@ PHP_ARG_WITH([libdir],
    [lib],
    [no])
- 
+
 +dnl Support systems with system libraries/includes in e.g. /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk.
 +PHP_ARG_WITH([os-sdkpath],
 +  [for system SDK directory],
