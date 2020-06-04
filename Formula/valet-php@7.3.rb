@@ -5,12 +5,6 @@ class ValetPhpAT73 < Formula
   sha256 "7b3e2479a8d6fd7666dcdef8aec50d49c4599cc6ee86e48d41724cfd99cc9e58"
   revision 3
 
-  bottle do
-    root_url "https://dl.bintray.com/calvinfa/homebrew-php"
-    sha256 "03c444f3707d08d0d3cd5bc1d3d6ebba0cdd904c4b2e8ebffc44d89acc83dc15" => :mojave
-    sha256 "daf44f31f04f844938c326398ad1c9ef3fcfdfd011c61e820a9e0d198528b50d" => :high_sierra
-  end
-
   keg_only :versioned_formula
 
   depends_on "httpd" => [:build, :test]
