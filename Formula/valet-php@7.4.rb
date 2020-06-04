@@ -118,9 +118,6 @@ class ValetPhpAT74 < Formula
       --enable-mbstring
       --enable-mysqlnd
       --enable-pcntl
-      --enable-phpdbg
-      --enable-phpdbg-readline
-      --enable-phpdbg-webhelper
       --enable-shmop
       --enable-soap
       --enable-sockets
