@@ -1,10 +1,23 @@
-class ValetPhpAT74 < Formula
+class Php < Formula
   desc "General-purpose scripting language"
   homepage "https://www.php.net/"
+  # Should only be updated if the new version is announced on the homepage, https://www.php.net/
   url "https://www.php.net/distributions/php-7.4.6.tar.xz"
   sha256 "d740322f84f63019622b9f369d64ea5ab676547d2bdcf12be77a5a4cffd06832"
+  revision 1
 
-  keg_only :versioned_formula
+  bottle do
+    sha256 "f9bda8ea1bf0108091487a5595b02cc66370198296f7a78d033ccbc7c9f9958c" => :catalina
+    sha256 "a5c17a3e4a186cece0e483a2e4cf8d6ac41826decfe826f01688f5d53e170d36" => :mojave
+    sha256 "75345ed154fd07c14153e9285db4ac65e7be511392bce7708d1da7179267d881" => :high_sierra
+  end
+
+  head do
+    url "https://github.com/php/php-src.git"
+
+    depends_on "bison" => :build # bison >= 3.0.0 required to generate parsers
+    depends_on "re2c" => :build # required to generate PHP lexers
+  end
 
   depends_on "httpd" => [:build, :test]
   depends_on "pkg-config" => :build
@@ -25,7 +38,6 @@ class ValetPhpAT74 < Formula
   depends_on "libpng"
   depends_on "libpq"
   depends_on "libsodium"
-  depends_on "libyaml"
   depends_on "libzip"
   depends_on "oniguruma"
   depends_on "openldap"
@@ -36,15 +48,21 @@ class ValetPhpAT74 < Formula
   depends_on "webp"
   depends_on "imap-uw"
 
+  uses_from_macos "xz" => :build
+  uses_from_macos "bzip2"
+  uses_from_macos "krb5"
+  uses_from_macos "libedit"
+  uses_from_macos "libxml2"
+  uses_from_macos "libxslt"
+  uses_from_macos "zlib"
+
   # PHP build system incorrectly links system libraries
   # see https://github.com/php/php-src/pull/3472
   patch :DATA
 
   def install
     # Ensure that libxml2 will be detected correctly in older MacOS
-    if MacOS.version == :el_capitan || MacOS.version == :sierra
-      ENV["SDKROOT"] = MacOS.sdk_path
-    end
+    ENV["SDKROOT"] = MacOS.sdk_path if MacOS.version == :el_capitan || MacOS.version == :sierra
 
     # buildconf required due to system library linking bug patch
     system "./buildconf", "--force"
@@ -56,10 +74,6 @@ class ValetPhpAT74 < Formula
               "APXS_LIBEXECDIR='$(INSTALL_ROOT)#{lib}/httpd/modules'"
       s.gsub! "-z `$APXS -q SYSCONFDIR`",
               "-z ''"
-
-      # apxs will interpolate the @ in the versioned prefix: https://bz.apache.org/bugzilla/show_bug.cgi?id=61944
-      s.gsub! "LIBEXECDIR='$APXS_LIBEXECDIR'",
-              "LIBEXECDIR='" + "#{lib}/httpd/modules".gsub("@", "\\@") + "'"
     end
 
     # Update error message in apache sapi to better explain the requirements
@@ -75,7 +89,7 @@ class ValetPhpAT74 < Formula
 
     inreplace "sapi/fpm/php-fpm.conf.in", ";daemonize = yes", "daemonize = no"
 
-    config_path = etc/"valet-php/#{php_version}"
+    config_path = etc/"php/#{php_version}"
     # Prevent system pear config from inhibiting pear install
     (config_path/"pear.conf").delete if (config_path/"pear.conf").exist?
 
@@ -116,6 +130,7 @@ class ValetPhpAT74 < Formula
       --enable-mysqlnd
       --enable-pcntl
       --enable-phpdbg
+      --enable-phpdbg-readline
       --enable-phpdbg-webhelper
       --enable-shmop
       --enable-soap
@@ -148,7 +163,7 @@ class ValetPhpAT74 < Formula
       --with-password-argon2=#{Formula["argon2"].opt_prefix}
       --with-pdo-dblib=#{Formula["freetds"].opt_prefix}
       --with-pdo-mysql=mysqlnd
-      --with-pdo-odbc=unixODBC
+      --with-pdo-odbc=unixODBC,#{Formula["unixodbc"].opt_prefix}
       --with-pdo-pgsql=#{Formula["libpq"].opt_prefix}
       --with-pdo-sqlite
       --with-pgsql=#{Formula["libpq"].opt_prefix}
@@ -179,10 +194,11 @@ class ValetPhpAT74 < Formula
       "extension_dir = \"#{HOMEBREW_PREFIX}/lib/php/pecl/#{orig_ext_dir}\""
 
     # Use OpenSSL cert bundle
+    openssl = Formula["openssl@1.1"]
     inreplace "php.ini-development", /; ?openssl\.cafile=/,
-      "openssl.cafile = \"#{etc}/openssl@1.1/cert.pem\""
+      "openssl.cafile = \"#{openssl.pkgetc}/cert.pem\""
     inreplace "php.ini-development", /; ?openssl\.capath=/,
-      "openssl.capath = \"#{etc}/openssl@1.1/certs\""
+      "openssl.capath = \"#{openssl.pkgetc}/certs\""
 
     config_files = {
       "php.ini-development"   => "php.ini",
@@ -204,7 +220,7 @@ class ValetPhpAT74 < Formula
   def post_install
     pear_prefix = pkgshare/"pear"
     pear_files = %W[
-    #{pear_prefix}/.depdblock
+      #{pear_prefix}/.depdblock
       #{pear_prefix}/.filemap
       #{pear_prefix}/.depdb
       #{pear_prefix}/.lock
@@ -228,20 +244,20 @@ class ValetPhpAT74 < Formula
     php_ext_dir = opt_prefix/"lib/php"/php_basename
 
     # fix pear config to install outside cellar
-    pear_path = HOMEBREW_PREFIX/"share/pear@#{php_version}"
+    pear_path = HOMEBREW_PREFIX/"share/pear"
     cp_r pkgshare/"pear/.", pear_path
     {
-        "php_ini"  => etc/"valet-php/#{php_version}/php.ini",
-        "php_dir"  => pear_path,
-        "doc_dir"  => pear_path/"doc",
-        "ext_dir"  => pecl_path/php_basename,
-        "bin_dir"  => opt_bin,
-        "data_dir" => pear_path/"data",
-        "cfg_dir"  => pear_path/"cfg",
-        "www_dir"  => pear_path/"htdocs",
-        "man_dir"  => HOMEBREW_PREFIX/"share/man",
-        "test_dir" => pear_path/"test",
-        "php_bin"  => opt_bin/"php",
+      "php_ini"  => etc/"php/#{php_version}/php.ini",
+      "php_dir"  => pear_path,
+      "doc_dir"  => pear_path/"doc",
+      "ext_dir"  => pecl_path/php_basename,
+      "bin_dir"  => opt_bin,
+      "data_dir" => pear_path/"data",
+      "cfg_dir"  => pear_path/"cfg",
+      "www_dir"  => pear_path/"htdocs",
+      "man_dir"  => HOMEBREW_PREFIX/"share/man",
+      "test_dir" => pear_path/"test",
+      "php_bin"  => opt_bin/"php",
     }.each do |key, value|
       value.mkpath if /(?<!bin|man)_dir$/.match?(key)
       system bin/"pear", "config-set", key, value, "system"
@@ -252,7 +268,7 @@ class ValetPhpAT74 < Formula
     %w[
       opcache
     ].each do |e|
-      ext_config_path = etc/"valet-php/#{php_version}/conf.d/ext-#{e}.ini"
+      ext_config_path = etc/"php/#{php_version}/conf.d/ext-#{e}.ini"
       extension_type = (e == "opcache") ? "zend_extension" : "extension"
       if ext_config_path.exist?
         inreplace ext_config_path,
@@ -289,29 +305,30 @@ class ValetPhpAT74 < Formula
 
   plist_options :manual => "php-fpm"
 
-  def plist; <<~EOS
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-      <dict>
-        <key>KeepAlive</key>
-        <true/>
-        <key>Label</key>
-        <string>#{plist_name}</string>
-        <key>ProgramArguments</key>
-        <array>
-          <string>#{opt_sbin}/php-fpm</string>
-          <string>--nodaemonize</string>
-        </array>
-        <key>RunAtLoad</key>
-        <true/>
-        <key>WorkingDirectory</key>
-        <string>#{var}</string>
-        <key>StandardErrorPath</key>
-        <string>#{var}/log/php-fpm.log</string>
-      </dict>
-    </plist>
-  EOS
+  def plist
+    <<~EOS
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+        <dict>
+          <key>KeepAlive</key>
+          <true/>
+          <key>Label</key>
+          <string>#{plist_name}</string>
+          <key>ProgramArguments</key>
+          <array>
+            <string>#{opt_sbin}/php-fpm</string>
+            <string>--nodaemonize</string>
+          </array>
+          <key>RunAtLoad</key>
+          <true/>
+          <key>WorkingDirectory</key>
+          <string>#{var}</string>
+          <key>StandardErrorPath</key>
+          <string>#{var}/log/php-fpm.log</string>
+        </dict>
+      </plist>
+    EOS
   end
 
   test do
@@ -328,14 +345,8 @@ class ValetPhpAT74 < Formula
     assert_no_match /^snmp$/, shell_output("#{bin}/php -m"),
       "SNMP extension doesn't work reliably with Homebrew on High Sierra"
     begin
-      require "socket"
-
-      server = TCPServer.new(0)
-      port = server.addr[1]
-      server_fpm = TCPServer.new(0)
-      port_fpm = server_fpm.addr[1]
-      server.close
-      server_fpm.close
+      port = free_port
+      port_fpm = free_port
 
       expected_output = /^Hello world!$/
       (testpath/"index.php").write <<~EOS
@@ -356,10 +367,16 @@ class ValetPhpAT74 < Formula
         DirectoryIndex index.php
       EOS
 
+      php_module = if head?
+        "LoadModule php_module #{lib}/httpd/modules/libphp.so"
+      else
+        "LoadModule php7_module #{lib}/httpd/modules/libphp7.so"
+      end
+
       (testpath/"httpd.conf").write <<~EOS
         #{main_config}
         LoadModule mpm_prefork_module lib/httpd/modules/mod_mpm_prefork.so
-        LoadModule php7_module #{lib}/httpd/modules/libphp7.so
+        #{php_module}
         <FilesMatch \\.(php|phar)$>
           SetHandler application/x-httpd-php
         </FilesMatch>
