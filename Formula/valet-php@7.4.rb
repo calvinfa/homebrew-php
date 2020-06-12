@@ -6,12 +6,6 @@ class ValetPhpAT74 < Formula
   mirror "https://fossies.org/linux/www/php-7.4.7.tar.xz"
   sha256 "53558f8f24cd8ab6fa0ea252ca8198e2650160649681ce5230c1df1dc2b52faf"
 
-  bottle do
-    sha256 "ccf94b39c146eb766a2f3bd250008fa13649814968c3dbd17a9801fd0d70a87e" => :catalina
-    sha256 "eda05d8ddbcf4d611b64836bc7902ee1e2dad3e49eeb494ad3493f5c1589fcf9" => :mojave
-    sha256 "f1409ba91d2446d9eabac8933ac102c64f6f5491ffea8c822ee0daff8572bd1c" => :high_sierra
-  end
-
   head do
     url "https://github.com/php/php-src.git"
 
