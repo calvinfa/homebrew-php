@@ -2,11 +2,22 @@ class ValetPhpAT74 < Formula
   desc "General-purpose scripting language"
   homepage "https://www.php.net/"
   # Should only be updated if the new version is announced on the homepage, https://www.php.net/
-  url "https://www.php.net/distributions/php-7.4.6.tar.xz"
-  sha256 "d740322f84f63019622b9f369d64ea5ab676547d2bdcf12be77a5a4cffd06832"
-  revision 1
+  url "https://www.php.net/distributions/php-7.4.7.tar.xz"
+  mirror "https://fossies.org/linux/www/php-7.4.7.tar.xz"
+  sha256 "53558f8f24cd8ab6fa0ea252ca8198e2650160649681ce5230c1df1dc2b52faf"
 
-  keg_only :versioned_formula
+  bottle do
+    sha256 "ccf94b39c146eb766a2f3bd250008fa13649814968c3dbd17a9801fd0d70a87e" => :catalina
+    sha256 "eda05d8ddbcf4d611b64836bc7902ee1e2dad3e49eeb494ad3493f5c1589fcf9" => :mojave
+    sha256 "f1409ba91d2446d9eabac8933ac102c64f6f5491ffea8c822ee0daff8572bd1c" => :high_sierra
+  end
+
+  head do
+    url "https://github.com/php/php-src.git"
+
+    depends_on "bison" => :build # bison >= 3.0.0 required to generate parsers
+    depends_on "re2c" => :build # required to generate PHP lexers
+  end
 
   depends_on "httpd" => [:build, :test]
   depends_on "pkg-config" => :build
@@ -35,11 +46,13 @@ class ValetPhpAT74 < Formula
   depends_on "tidy-html5"
   depends_on "unixodbc"
   depends_on "webp"
+  
   depends_on "imap-uw"
+  depends_on "openssl@1.1"
+  depends_on "krb5"
 
   uses_from_macos "xz" => :build
   uses_from_macos "bzip2"
-  uses_from_macos "krb5"
   uses_from_macos "libedit"
   uses_from_macos "libxml2"
   uses_from_macos "libxslt"
@@ -118,6 +131,9 @@ class ValetPhpAT74 < Formula
       --enable-mbstring
       --enable-mysqlnd
       --enable-pcntl
+      --enable-phpdbg
+      --enable-phpdbg-readline
+      --enable-phpdbg-webhelper
       --enable-shmop
       --enable-soap
       --enable-sockets
