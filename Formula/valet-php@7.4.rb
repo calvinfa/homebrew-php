@@ -94,7 +94,7 @@ class ValetPhpAT74 < Formula
 
     # system pkg-config missing
     ENV["KERBEROS_CFLAGS"] = " "
-    ENV["KERBEROS_LIBS"] = "-lkrb5"
+    ENV["KERBEROS_LIBS"] = "-lkrb5 -lgssapi_krb5"
     ENV["SASL_CFLAGS"] = "-I#{MacOS.sdk_path_if_needed}/usr/include/sasl"
     ENV["SASL_LIBS"] = "-lsasl2"
     ENV["EDIT_CFLAGS"] = " "
