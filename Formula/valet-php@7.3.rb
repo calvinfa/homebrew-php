@@ -465,6 +465,15 @@ index 168c465f8d..6c087d152f 100644
  ])
 
  dnl internal, don't use
+@@ -1389,7 +1389,7 @@
+     POSIX)
+       AC_DEFINE(HAVE_POSIX_READDIR_R,1,[whether you have POSIX readdir_r]);;
+     old-style)
+-      AC_DEFINE(HAVE_OLD_READDIR_R,1,[whether you have old-style readdir_r]);;
++      AC_DEFINE(HAVE_POSIX_READDIR_R,1,[whether you have POSIX readdir_r 2]);;
+     esac
+   fi
+ ])
 @@ -2411,7 +2419,8 @@ AC_DEFUN([PHP_SETUP_ICONV], [
      fi
 
@@ -475,12 +484,3 @@ index 168c465f8d..6c087d152f 100644
      then
        PHP_CHECK_LIBRARY($iconv_lib_name, libiconv, [
          found_iconv=yes
-@@ -1389,7 +1389,7 @@
-     POSIX)
-       AC_DEFINE(HAVE_POSIX_READDIR_R,1,[whether you have POSIX readdir_r]);;
-     old-style)
--      AC_DEFINE(HAVE_OLD_READDIR_R,1,[whether you have old-style readdir_r]);;
-+      AC_DEFINE(HAVE_POSIX_READDIR_R,1,[whether you have POSIX readdir_r 2]);;
-     esac
-   fi
- ])
