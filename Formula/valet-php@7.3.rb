@@ -1,9 +1,9 @@
 class ValetPhpAT73 < Formula
   desc "General-purpose scripting language"
   homepage "https://www.php.net/"
-  url "https://www.php.net/distributions/php-7.3.18.tar.xz"
-  sha256 "7b3e2479a8d6fd7666dcdef8aec50d49c4599cc6ee86e48d41724cfd99cc9e58"
-  revision 3
+  url "https://www.php.net/distributions/php-7.3.23.tar.xz"
+  sha256 "2bdd36176f318f451fb3942bf1e935aabb3c2786cac41a9080f084ad6390e034"
+  revision 4
 
   keg_only :versioned_formula
 
